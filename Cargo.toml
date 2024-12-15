@@ -1,0 +1,15 @@
+[package]
+name = "samsung-notes-merger"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+image = "0.25.5"
+regex = "1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "my_benchmark"
+harness = false
