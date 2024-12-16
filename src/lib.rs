@@ -67,11 +67,9 @@ pub fn get_note_name(path: &PathBuf) -> Option<String> {
 
     let re = Regex::new(r"(.*?)_").unwrap();
     let mut note_name = re
-        .captures(&note_name)
-        .unwrap()
+        .captures(&note_name)?
         .get(1)
-        .map(|m| m.as_str().to_string())
-        .unwrap();
+        .map(|m| m.as_str().to_string())?;
     note_name.push_str(".png");
     Some(note_name)
 }
