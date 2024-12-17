@@ -1,19 +1,6 @@
-#![allow(unused)]
+use std::{env::current_dir, process::exit};
 
-use image::{DynamicImage, GenericImageView, ImageBuffer, ImageReader, RgbaImage};
-use regex::{CaptureNames, Regex};
-use std::{
-    collections::HashMap,
-    env::{self, current_dir, Args},
-    fs,
-    path::{Path, PathBuf},
-    process::exit,
-    str::FromStr,
-};
-
-use samsung_notes_merger::{
-    get_folder, get_note_name, get_notes, merge_images, open_image, open_images, visit_dirs,
-};
+use samsung_notes_merger::{get_folder, get_notes, merge_images, open_images, visit_dirs};
 
 pub fn main() {
     let folder = get_folder().unwrap_or_else(|| {
