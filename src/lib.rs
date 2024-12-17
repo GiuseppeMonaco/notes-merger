@@ -1,13 +1,19 @@
-#![allow(unused)]
-
 use std::{
-    fmt::Error, fs::{self, DirEntry}, io, path::{Path, PathBuf}
+    collections::HashMap,
+    env, fs, io,
+    path::{Path, PathBuf},
 };
 
 use image::{
-    error, DynamicImage, GenericImageView, ImageBuffer, ImageError, ImageReader, Rgba, RgbaImage,
+    DynamicImage, GenericImageView, ImageBuffer, ImageError, ImageReader, Rgba, RgbaImage,
 };
 use regex::Regex;
+
+pub fn get_folder() -> Option<PathBuf> {
+    let mut args = env::args();
+    args.next();
+    Some(PathBuf::from(args.next()?))
+}
 
 pub fn merge_images(imgs: &Vec<DynamicImage>) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut width: u32 = 0;
@@ -38,6 +44,18 @@ pub fn merge_images(imgs: &Vec<DynamicImage>) -> ImageBuffer<Rgba<u8>, Vec<u8>> 
 
 pub fn open_image<P: AsRef<Path>>(path: P) -> Result<DynamicImage, ImageError> {
     ImageReader::open(path)?.decode()
+}
+
+pub fn open_images(paths: Vec<PathBuf>) -> Result<Vec<DynamicImage>, PathBuf> {
+    let mut ret = Vec::<DynamicImage>::new();
+    for path in paths {
+        let img = match open_image(&path) {
+            Ok(img) => img,
+            Err(_) => return Err(path),
+        };
+        ret.push(img);
+    }
+    Ok(ret)
 }
 
 pub fn visit_dirs<P: AsRef<Path>>(dir: P) -> io::Result<Vec<PathBuf>> {
@@ -72,4 +90,26 @@ pub fn get_note_name(path: &PathBuf) -> Option<String> {
         .map(|m| m.as_str().to_string())?;
     note_name.push_str(".png");
     Some(note_name)
+}
+
+pub fn get_notes(img_paths: Vec<PathBuf>) -> HashMap<String, Vec<PathBuf>> {
+    let mut notes = HashMap::<String, Vec<PathBuf>>::new();
+
+    for path in img_paths {
+        let name = match get_note_name(&path) {
+            Some(name) => name,
+            None => continue,
+        };
+
+        if !notes.contains_key(&name) {
+            notes.insert(name.clone(), vec![]);
+        }
+
+        notes.get_mut(&name).unwrap().push(path);
+    }
+
+    for path in notes.iter_mut() {
+        path.1.sort();
+    }
+    notes
 }
