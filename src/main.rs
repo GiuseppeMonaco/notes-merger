@@ -49,6 +49,11 @@ pub fn main() {
                 continue;
             }
         };
-        merge_images(&images).save(note.0);
+        match merge_images(&images).save(&note.0) {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Impossibile salvare la nota {}: {:?}", note.0, err)
+            }
+        };
     }
 }
