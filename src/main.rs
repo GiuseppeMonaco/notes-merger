@@ -1,86 +1,67 @@
 #![allow(unused)]
 
 use image::{DynamicImage, GenericImageView, ImageBuffer, ImageReader, RgbaImage};
-use regex::Regex;
-use std::{env, fs, path::PathBuf, str::FromStr};
+use regex::{CaptureNames, Regex};
+use std::{
+    collections::HashMap,
+    env::{self, current_dir, Args},
+    fs,
+    path::{Path, PathBuf},
+    process::exit,
+    str::FromStr,
+};
 
-use samsung_notes_merger::{get_note_name, merge_images, open_image, visit_dirs};
-
-fn main_bak() {
-    let paths: Vec<_> = std::fs::read_dir("imgs/in")
-        .unwrap()
-        .map(|res| res.unwrap().path())
-        .collect();
-
-    dbg!(&paths);
-
-    for path in paths {
-        let note_name = match get_note_name(&path) {
-            Some(ret) => ret,
-            None => continue,
-        };
-
-        if match fs::exists(PathBuf::from_str(&note_name).unwrap()) {
-            Ok(bool) => bool,
-            Err(_) => panic!("Impossibile verificare se il file esiste già."),
-        } {
-            println!("{} esiste già... skip", note_name);
-            continue;
-        }
-
-        if !path.is_dir() {
-            ImageReader::open(path)
-                .unwrap()
-                .decode()
-                .unwrap()
-                .save(note_name)
-                .unwrap();
-            continue;
-        };
-
-        let mut img_paths: Vec<String> = std::fs::read_dir(path)
-            .unwrap()
-            .map(|res| res.unwrap().path().to_str().unwrap().to_string())
-            .collect();
-
-        img_paths.sort();
-
-        dbg!(&img_paths);
-    }
-}
-
-fn esempio_args() -> Vec<String> {
-    let args: Vec<String> = env::args().collect();
-    println!("{}", {
-        match args.get(1) {
-            Some(arg) => arg,
-            None => "Primo argomento non definito!",
-        }
-    });
-    println!("{}", {
-        match args.get(2) {
-            Some(arg) => arg,
-            None => "Secondo argomento non definito!",
-        }
-    });
-    args
-}
-
-pub fn main_main() {
-    loop {
-        let img1 = match open_image("benches/assets/image_merge/img1.jpg") {
-            Ok(img) => img,
-            Err(err) => {println!("Impossibile aprire l'immagine: {:?}", err); continue},
-        };
-        let img2 = match open_image("benches/assets/image_merge/img2.jpg") {
-            Ok(img) => img,
-            Err(err) => {println!("Impossibile aprire l'immagine: {:?}", err); continue},
-        };
-        let imgs = vec![img1, img2];
-        merge_images(&imgs).save("imgs/ciao.png");
-    }
-}
+use samsung_notes_merger::{
+    get_folder, get_note_name, get_notes, merge_images, open_image, open_images, visit_dirs,
+};
 
 pub fn main() {
-    dbg!(visit_dirs("imgs"));
+    let folder = get_folder().unwrap_or_else(|| {
+        current_dir().ok().unwrap_or_else(|| {
+            println!("Devi specificare una cartella valida come argomento del programma.");
+            exit(-1);
+        })
+    });
+
+    match folder.try_exists() {
+        Ok(exist) => {
+            if !exist {
+                println!("Il percorso specificato non esiste.");
+                exit(-1);
+            }
+        }
+        Err(_) => {
+            println!("Non riesco a verificare se la cartella esiste.");
+            exit(-1);
+        }
+    }
+
+    if !folder.is_dir() {
+        println!("Il percorso specificato non è una directory.");
+        exit(-1);
+    }
+
+    let img_paths = match visit_dirs(folder) {
+        Ok(a) => a,
+        Err(_) => {
+            println!("Non sono riuscito a leggere le cartelle.");
+            exit(-1);
+        }
+    };
+
+    let notes = get_notes(img_paths);
+
+    for note in notes {
+        let images = match open_images(note.1) {
+            Ok(images) => images,
+            Err(path) => {
+                println!(
+                    "Non sono riuscito ad aprire l'immagine {:?}. Salto la nota {}",
+                    path, note.0
+                );
+                continue;
+            }
+        };
+        merge_images(&images).save(note.0);
+    }
 }
