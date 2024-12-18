@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 image = "0.25.5"
 regex = "1"
+clap = { version = "4.5.23", features = ["derive"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
