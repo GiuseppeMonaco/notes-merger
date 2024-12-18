@@ -46,7 +46,7 @@ pub fn open_image<P: AsRef<Path>>(path: P) -> Result<DynamicImage, ImageError> {
     ImageReader::open(path)?.decode()
 }
 
-pub fn open_images(paths: Vec<PathBuf>) -> Result<Vec<DynamicImage>, PathBuf> {
+pub fn open_images(paths: &Vec<PathBuf>) -> Result<Vec<DynamicImage>, &PathBuf> {
     let mut ret = Vec::<DynamicImage>::new();
     for path in paths {
         let img = match open_image(&path) {

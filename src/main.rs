@@ -1,4 +1,5 @@
 use clap::Parser;
+use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
 use std::{fs, path::PathBuf, process::exit};
 
 use samsung_notes_merger::{get_notes, merge_images, open_images, visit_dirs};
@@ -83,30 +84,41 @@ pub fn main() {
 
     let notes = get_notes(img_paths);
 
-    if !args.dry {
-        for note in notes {
-            let images = match open_images(note.1) {
-                Ok(images) => images,
-                Err(path) => {
-                    println!(
-                        "Non sono riuscito ad aprire l'immagine {:?}. Salto la nota {}",
-                        path, note.0
-                    );
-                    continue;
-                }
-            };
-
-            let mut output_folder = PathBuf::from(&args.output_folder);
-            output_folder.push(&note.0);
-
-            match merge_images(&images).save(output_folder) {
-                Ok(_) => {}
-                Err(err) => {
-                    println!("Impossibile salvare la nota {}: {:?}", note.0, err)
-                }
-            };
-        }
-    } else {
+    if args.dry {
         dbg!(notes);
+        exit(0);
     }
+
+    let merge_progressbar = ProgressBar::new(notes.len() as u64)
+        .with_prefix("Merging notes")
+        .with_style(
+            ProgressStyle::with_template("{prefix} [{bar:40}] {pos:>7}/{len:7} {msg}")
+                .unwrap()
+                .progress_chars("=> "),
+        )
+        .with_finish(ProgressFinish::Abandon);
+
+    for note in notes.iter().progress_with(merge_progressbar) {
+        let images = match open_images(note.1) {
+            Ok(images) => images,
+            Err(path) => {
+                println!(
+                    "Non sono riuscito ad aprire l'immagine {:?}. Salto la nota {}",
+                    path, note.0
+                );
+                continue;
+            }
+        };
+
+        let mut output_folder = PathBuf::from(&args.output_folder);
+        output_folder.push(&note.0);
+
+        match merge_images(&images).save(output_folder) {
+            Ok(_) => {}
+            Err(err) => {
+                println!("Impossibile salvare la nota {}: {:?}", note.0, err)
+            }
+        };
+    }
+    println!("Done!");
 }
