@@ -7,18 +7,18 @@ use samsung_notes_merger::{get_notes, merge_images, open_images, visit_dirs};
 #[derive(Parser, Debug)]
 #[command(
     version,
-    about = "\x1b[1m\x1b[4mSamsung Note Merger\x1b[0m\nA tool for merging images exported from Samsung Notes app "
+    about = "\x1b[1m\x1b[4mSamsung Note Merger\x1b[0m\nA tool for merging images exported from Samsung Notes app"
 )]
 struct Args {
-    /// Directory da cui prendere le note
+    /// Directory to take notes from
     #[arg(short, long, default_value_t = String::from("./"))]
     input_folder: String,
 
-    /// Directory dove salvare le note mergate
+    /// Directory where merged notes are saved
     #[arg(short, long, default_value_t = String::from("./out/"))]
     output_folder: String,
 
-    /// Mostra una preview delle note senza salvarle
+    /// Show a preview of notes without saving them
     #[arg(short, long, default_value_t = false)]
     dry: bool,
 }
@@ -30,45 +30,43 @@ pub fn main() {
 
     let output_folder = PathBuf::from(&args.output_folder);
 
-    // Controllo validità input folder
+    // Check if input folder is valid
 
     match input_folder.try_exists() {
         Ok(exist) => {
             if !exist {
-                println!("La directory specificata come input non esiste.");
+                println!("The directory specified as input does not exist.");
                 exit(-1);
             }
         }
         Err(_) => {
-            println!("Non riesco a verificare se la directory esiste.");
+            println!("Cannot check if the directory specified as input exists.");
             exit(-1);
         }
     }
 
     if !input_folder.is_dir() {
-        println!("Il percorso specificato come input non è una directory.");
+        println!("The path specified as input is not a directory.");
         exit(-1);
     }
 
-    // Controllo validità output folder
+    // Check if output folder is valid
 
     if !output_folder.is_dir() {
         match output_folder.try_exists() {
             Ok(exist) => {
                 if exist {
-                    println!(
-                        "Il percorso specificato come output esiste già e non è una directory."
-                    );
+                    println!("The path specified as output already exists and is not a directory.");
                     exit(-1);
                 } else {
                     fs::create_dir(output_folder).unwrap_or_else(|_| {
-                        println!("Non posso creare la directory specificata come output");
+                        println!("Cannot create directory specified as output");
                         exit(-1);
                     })
                 }
             }
             Err(_) => {
-                println!("Non riesco a verificare se la directory esiste.");
+                println!("Cannot verify if the directory exist.");
                 exit(-1);
             }
         }
@@ -77,7 +75,7 @@ pub fn main() {
     let img_paths = match visit_dirs(input_folder) {
         Ok(a) => a,
         Err(_) => {
-            println!("Non sono riuscito a leggere le cartelle.");
+            println!("Cannot read the folder.");
             exit(-1);
         }
     };
@@ -103,7 +101,7 @@ pub fn main() {
             Ok(images) => images,
             Err(path) => {
                 println!(
-                    "Non sono riuscito ad aprire l'immagine {:?}. Salto la nota {}",
+                    "Could not open the image: {:?}. Skipping note: {}",
                     path, note.0
                 );
                 continue;
@@ -116,7 +114,7 @@ pub fn main() {
         match merge_images(&images).save(output_folder) {
             Ok(_) => {}
             Err(err) => {
-                println!("Impossibile salvare la nota {}: {:?}", note.0, err)
+                println!("Unable to save note {}: {:?}", note.0, err)
             }
         };
     }
