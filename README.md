@@ -1,1 +1,2 @@
-# samsung-notes-merger
+# Notes Merger
+This tool is used to concatenate images of notes that are exported from a note taking app, like the "Samsung Notes" app. It is especially useful if the exported notes have infinitely scrolling pages, but it could also work for notes that are split into pages.
