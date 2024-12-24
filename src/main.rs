@@ -2,12 +2,12 @@ use clap::Parser;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
 use std::{fs, path::PathBuf, process::exit};
 
-use samsung_notes_merger::{get_notes, merge_images, open_images, visit_dirs};
+use notes_merger::{get_notes, merge_images, open_images, visit_dirs};
 
 #[derive(Parser, Debug)]
 #[command(
     version,
-    about = "\x1b[1m\x1b[4mSamsung Note Merger\x1b[0m\nA tool for merging images exported from Samsung Notes app."
+    about = "\x1b[1m\x1b[4mNotes Merger\x1b[0m\nA tool for merging notes exported as images from notes taking apps."
 )]
 struct Args {
     /// Directory to take notes from
