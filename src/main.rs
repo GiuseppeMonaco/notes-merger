@@ -7,7 +7,7 @@ use samsung_notes_merger::{get_notes, merge_images, open_images, visit_dirs};
 #[derive(Parser, Debug)]
 #[command(
     version,
-    about = "\x1b[1m\x1b[4mSamsung Note Merger\x1b[0m\nA tool for merging images exported from Samsung Notes app"
+    about = "\x1b[1m\x1b[4mSamsung Note Merger\x1b[0m\nA tool for merging images exported from Samsung Notes app."
 )]
 struct Args {
     /// Directory to take notes from
@@ -60,7 +60,7 @@ pub fn main() {
                     exit(-1);
                 } else {
                     fs::create_dir(output_folder).unwrap_or_else(|_| {
-                        println!("Cannot create directory specified as output");
+                        println!("Cannot create directory specified as output.");
                         exit(-1);
                     })
                 }
@@ -101,7 +101,7 @@ pub fn main() {
             Ok(images) => images,
             Err(path) => {
                 println!(
-                    "Could not open the image: {:?}. Skipping note: {}",
+                    "Could not open the image: {:?}. Skipping note: {}.",
                     path, note.0
                 );
                 continue;
@@ -114,7 +114,7 @@ pub fn main() {
         match merge_images(&images).save(output_folder) {
             Ok(_) => {}
             Err(err) => {
-                println!("Unable to save note {}: {:?}", note.0, err)
+                println!("Unable to save note {}: {:?}.", note.0, err)
             }
         };
     }
