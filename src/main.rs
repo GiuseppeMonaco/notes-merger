@@ -52,7 +52,7 @@ pub fn main() {
 
     // Check if output folder is valid
 
-    if !output_folder.is_dir() {
+    if !output_folder.is_dir() && !args.dry {
         match output_folder.try_exists() {
             Ok(exist) => {
                 if exist {
