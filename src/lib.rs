@@ -80,7 +80,7 @@ fn visit_dirs_rec<P: AsRef<Path>>(dir: P, list: &mut Vec<PathBuf>) -> io::Result
     Ok(())
 }
 
-pub fn get_note_name(path: &PathBuf) -> Option<String> {
+fn get_note_name(path: &PathBuf) -> Option<String> {
     let note_name = path.to_str()?.to_string();
 
     let re = Regex::new(r".*[\/\\](.*?)_.*(?:\.png|\.jpeg|\.jpg)").unwrap();
