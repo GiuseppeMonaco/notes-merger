@@ -11,11 +11,11 @@ use notes_merger::{get_notes, merge_images, open_images, visit_dirs};
 )]
 struct Args {
     /// Directory to take notes from
-    #[arg(short, long, default_value_t = String::from("./"))]
+    #[arg(short, default_value_t = String::from("./"))]
     input_folder: String,
 
     /// Directory where merged notes are saved
-    #[arg(short, long, default_value_t = String::from("./out/"))]
+    #[arg(short, default_value_t = String::from("./out/"))]
     output_folder: String,
 
     /// Show a preview of notes without saving them
