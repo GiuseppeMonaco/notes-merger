@@ -92,13 +92,19 @@ fn get_note_name(path: &PathBuf) -> Option<String> {
     Some(note_name)
 }
 
-pub fn get_notes(img_paths: Vec<PathBuf>) -> HashMap<String, Vec<PathBuf>> {
+pub fn get_notes(
+    img_paths: Vec<PathBuf>,
+) -> Result<HashMap<String, Vec<PathBuf>>, HashMap<String, Vec<PathBuf>>> {
     let mut notes = HashMap::<String, Vec<PathBuf>>::new();
+    let mut some_not_file = false;
 
     for path in img_paths {
         let name = match get_note_name(&path) {
             Some(name) => name,
-            None => continue,
+            None => {
+                some_not_file = true;
+                continue;
+            }
         };
 
         if !notes.contains_key(&name) {
@@ -111,5 +117,43 @@ pub fn get_notes(img_paths: Vec<PathBuf>) -> HashMap<String, Vec<PathBuf>> {
     for path in notes.iter_mut() {
         path.1.sort();
     }
-    notes
+    if some_not_file {
+        Err(notes)
+    } else {
+        Ok(notes)
+    }
+}
+
+// Generate a confirmation
+pub fn confirmation_prompt() -> bool {
+    let mut string = String::new();
+    match io::stdin().read_line(&mut string) {
+        Ok(_) => (),
+        Err(_) => return false,
+    };
+    string = string.trim().to_lowercase();
+    match string.as_str() {
+        "y" => true,
+        "yes" => true,
+        _ => false,
+    }
+}
+
+pub fn get_printable_notes_list(notes: HashMap<String, Vec<PathBuf>>) -> String {
+    let mut ret = String::from("\x1b[1mNotes after merging:\x1b[0m\n");
+    for note in notes {
+        ret.push_str("    \x1b[4m");
+        ret.push_str(note.0.as_str());
+        ret.push_str("\x1b[0m\n");
+        let mut c: u32 = 0;
+        for path in note.1 {
+            c = c + 1;
+            ret.push_str("        ");
+            ret.push_str(c.to_string().as_str());
+            ret.push_str(") \"");
+            ret.push_str(path.to_str().unwrap_or(""));
+            ret.push_str("\"\n");
+        }
+    }
+    ret
 }

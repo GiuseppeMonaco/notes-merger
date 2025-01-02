@@ -1,8 +1,15 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
-use std::{fs, path::PathBuf, process::exit};
+use std::{
+    fs,
+    io::{self, Write},
+    path::PathBuf,
+    process::exit,
+};
 
-use notes_merger::{get_notes, merge_images, open_images, visit_dirs};
+use notes_merger::{
+    confirmation_prompt, get_notes, get_printable_notes_list, merge_images, open_images, visit_dirs,
+};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -52,6 +59,7 @@ pub fn main() {
 
     // Check if output folder is valid
 
+    let mut out_dir_to_create = false;
     if !output_folder.is_dir() && !args.dry {
         match output_folder.try_exists() {
             Ok(exist) => {
@@ -59,10 +67,7 @@ pub fn main() {
                     println!("The path specified as output already exists and is not a directory.");
                     exit(-1);
                 } else {
-                    fs::create_dir(output_folder).unwrap_or_else(|_| {
-                        println!("Cannot create directory specified as output.");
-                        exit(-1);
-                    })
+                    out_dir_to_create = true;
                 }
             }
             Err(_) => {
@@ -80,13 +85,37 @@ pub fn main() {
         }
     };
 
-    let notes = get_notes(img_paths);
+    let notes = match get_notes(img_paths) {
+        Ok(notes) => notes,
+        Err(notes) => {
+            print!("Folder contains files not compatible for merging... Are you sure to run merging anyway? [y/N] ");
+            io::stdout().flush().unwrap();
+            if !confirmation_prompt() {
+                exit(0);
+            }
+            notes
+        }
+    };
 
-    if args.dry {
-        dbg!(notes);
+    if notes.is_empty() {
+        println!("There are no notes to be merged.");
         exit(0);
     }
 
+    if args.dry {
+        print!("{}", get_printable_notes_list(notes));
+        exit(0);
+    }
+
+    // Create output folder if needed
+    if out_dir_to_create {
+        fs::create_dir(output_folder).unwrap_or_else(|_| {
+            println!("Cannot create directory specified as output.");
+            exit(-1);
+        })
+    }
+
+    // Progress bar for merging
     let merge_progressbar = ProgressBar::new(notes.len() as u64)
         .with_prefix("Merging notes")
         .with_style(
