@@ -92,6 +92,42 @@ fn get_note_name(path: &PathBuf) -> Option<String> {
     Some(note_name)
 }
 
+#[cfg(test)]
+mod get_note_name_tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn test1() {
+        assert_eq!(
+            "Note 1.png",
+            get_note_name(
+                &PathBuf::from_str("/some/folder/nesting/Note 1_240923_105036.jpg").unwrap()
+            )
+            .unwrap()
+        )
+    }
+
+    #[test]
+    fn test2() {
+        assert_eq!(
+            "Note 2.png",
+            get_note_name(&PathBuf::from_str("./Note 2_123.png").unwrap()).unwrap()
+        )
+    }
+
+    #[test]
+    fn test3() -> Result<(), String> {
+        match get_note_name(&PathBuf::from_str("/Note 1.jpeg").unwrap()) {
+            Some(value) => Err(String::from(format!(
+                "Function shouldn't return nothing, '{}' returned instead",
+                value
+            ))),
+            None => Ok(()),
+        }
+    }
+}
+
 pub fn get_notes(
     img_paths: Vec<PathBuf>,
 ) -> Result<HashMap<String, Vec<PathBuf>>, HashMap<String, Vec<PathBuf>>> {
